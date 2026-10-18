@@ -244,15 +244,6 @@ async function openControlSocket(
     });
 }
 
-/**
- * The console accepts Standby without a login, and it never answers the
- * login request while it shows the "not turned off properly" dialog after
- * a power loss, so a standby session skips it.
- */
-export function sessionRequiresLogin(config: IConnectionConfig) {
-    return config.intent !== ConnectionIntent.STANDBY;
-}
-
 export async function openSession(
     device: IDiscoveredDevice,
     config: IConnectionConfig,
@@ -263,7 +254,10 @@ export async function openSession(
     await delayMillis(1);
     const socket = await openControlSocket(device, creds, nonce);
 
-    if (sessionRequiresLogin(config)) {
+    // The console accepts Standby without a login, and it never answers
+    // the login request while it shows the "not turned off properly"
+    // dialog after a power loss, so a standby session skips it.
+    if (config.intent !== ConnectionIntent.STANDBY) {
         await socket.execute(new RemotePlayLoginProc(config));
     }
 
